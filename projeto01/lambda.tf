@@ -1,13 +1,21 @@
-
 /*
+  https://github.com/hashicorp/terraform-provider-aws/blob/main/examples/lambda/main.tf
+*/
 
-data "aws_iam_policy_document" "assume_role" {
+data "archive_file" "zip" {
+  type        = "zip"
+  source_file = "hello_lambda.py"
+  output_path = "hello_lambda.zip"
+}
+
+data "aws_iam_policy_document" "policy" {
   statement {
+    sid    = ""
     effect = "Allow"
 
     principals {
-      type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
+      type        = "Service"
     }
 
     actions = ["sts:AssumeRole"]
@@ -16,32 +24,24 @@ data "aws_iam_policy_document" "assume_role" {
 
 resource "aws_iam_role" "iam_for_lambda" {
   name               = "iam_for_lambda"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.policy.json
 }
 
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_file = "lambda.js"
-  output_path = "lambda_function_payload.zip"
-}
+resource "aws_lambda_function" "lambda" {
 
-resource "aws_lambda_function" "test_lambda" {
-  # If the file is not in the current working directory you will need to include a
-  # path.module in the filename.
-  filename      = "lambda_function_payload.zip"
-  function_name = "lambda_function_name"
-  role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "index.test"
+  function_name = "hello_lambda"
 
-  source_code_hash = data.archive_file.lambda.output_base64sha256
+  filename         = data.archive_file.zip.output_path
+  source_code_hash = data.archive_file.zip.output_base64sha256
 
-  runtime = "nodejs18.x"
+  role         = aws_iam_role.iam_for_lambda.arn
+  handler      = "hello_lambda.lambda_handler"
+  runtime      = "python3.11"
+  architecture = "arm64"
 
   environment {
     variables = {
-      foo = "bar"
+      greeting = "Hello"
     }
   }
 }
-
-*/
