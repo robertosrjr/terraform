@@ -1,10 +1,11 @@
 
+/*
 resource "aws_api_gateway_api_key" "api_key_orders_dev" {
   name = "api_key_orders_dev"
   description = "API Key Orders Dev"
   enabled          = true
 }
-
+/*
 resource "aws_api_gateway_usage_plan" "api_key_orders_plan_dev" {
   name = "plans-developer-order"
   description = "Plans developer order"
@@ -18,6 +19,11 @@ resource "aws_api_gateway_usage_plan" "api_key_orders_plan_dev" {
     rate_limit = 1
     burst_limit = 50
   }
+
+   api_stages {
+    api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+    stage = aws_api_gateway_deployment.example.stage_name
+  }
 }
 
 resource "aws_api_gateway_usage_plan_key" "example" {
@@ -25,3 +31,4 @@ resource "aws_api_gateway_usage_plan_key" "example" {
   key_type      = "API_KEY"
   usage_plan_id = aws_api_gateway_usage_plan.api_key_orders_plan_dev.id
 }
+*/
