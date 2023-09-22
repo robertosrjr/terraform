@@ -1,5 +1,5 @@
 resource "aws_sqs_queue" "new_order_queue" {
-  name                     = "new-order-queue.fifo"
+  name  = "new-order-queue.fifo"
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.new_order_dlq.arn,
