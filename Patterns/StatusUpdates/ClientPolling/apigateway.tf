@@ -33,13 +33,13 @@ resource "aws_api_gateway_integration" "api_gateway_order_integration_order" {
   credentials             = "arn:aws:iam::247755251743:role/my-apigateway-sqs-role"
   uri                     = "arn:aws:apigateway:${var.region}:sqs:path/${aws_sqs_queue.new_order_queue.name}"
 
-  request_parameters = {
-    "integration.request.header.Content-Type" = "'application/x-www-form-urlencoded'"
-  }
+    request_parameters = {
+      "integration.request.header.Content-Type" = "'application/x-www-form-urlencoded'"
+    }
 
-  request_templates = {
-    "application/json" = "Action=SendMessage&MessageBody=$input.body"
-  }
+    request_templates = {
+      "application/json" = "Action=SendMessage&MessageBody=$input.body&MessageGroupId=$input.json('$.groupId')"
+    }
   
   }
 
@@ -71,5 +71,24 @@ resource "aws_api_gateway_stage" "api_gateway_stage_dev" {
   deployment_id = aws_api_gateway_deployment.gateway_order_deployment_orders.id
   rest_api_id   = aws_api_gateway_rest_api.api_gateway_orders.id
   stage_name    = "dev"
+}
+
+resource "aws_api_gateway_method_response" "order_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
+  http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration_response" "api_gateway_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
+  http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
+  status_code = aws_api_gateway_method_response.order_response_200.status_code
+
+  # Transforms the backend JSON response to XML
+  response_templates = {
+    "application/json" = ""
+  }
 }
 
