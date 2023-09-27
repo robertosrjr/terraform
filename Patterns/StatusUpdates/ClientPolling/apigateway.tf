@@ -38,7 +38,7 @@ resource "aws_api_gateway_integration" "api_gateway_order_integration_order" {
     }
 
     request_templates = {
-      "application/json" = "Action=SendMessage&MessageBody=$input.body&MessageGroupId=$input.json('$.groupId')"
+      "application/json" = "Action=SendMessage&MessageBody=$input.body&MessageGroupId=$input.params().header.get('groupId')"
     }
   
   }
@@ -73,18 +73,70 @@ resource "aws_api_gateway_stage" "api_gateway_stage_dev" {
   stage_name    = "dev"
 }
 
-resource "aws_api_gateway_method_response" "order_response_200" {
+resource "aws_api_gateway_method_response" "order_method_response_200" {
   rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
   resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
   http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
   status_code = "200"
 }
 
-resource "aws_api_gateway_integration_response" "api_gateway_integration_response" {
+resource "aws_api_gateway_method_response" "order_method_response_400" {
   rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
   resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
   http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
-  status_code = aws_api_gateway_method_response.order_response_200.status_code
+  status_code = "400"
+}
+
+resource "aws_api_gateway_method_response" "order_method_response_500" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
+  http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
+  status_code = "500"
+}
+
+resource "aws_api_gateway_integration_response" "api_gateway_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
+  http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
+  status_code = aws_api_gateway_method_response.order_method_response_200.status_code
+  selection_pattern = "2\\d{2}"
+
+  # Transforms the backend JSON response to XML
+  response_templates = {
+    "application/json" = <<EOT
+        #set($inputRoot = $input.path('$'))
+        {
+          "statusCode": 200,
+          "message": "Resposta personalizada com dados do SQS",
+          "data":{
+            "requestId": \"$inputRoot.SendMessageResponse.ResponseMetadata.RequestId\",
+            "messageId": \"$inputRoot.SendMessageResponse.SendMessageResult.MessageId\",
+            "sequenceNumber": \"$inputRoot.SendMessageResponse.SendMessageResult.SequenceNumber\"
+          } 
+        }
+    EOT
+  }
+}
+
+resource "aws_api_gateway_integration_response" "api_gateway_integration_response_400" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
+  http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
+  status_code = aws_api_gateway_method_response.order_method_response_400.status_code
+  selection_pattern = "4\\d{2}"
+
+  # Transforms the backend JSON response to XML
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+resource "aws_api_gateway_integration_response" "api_gateway_integration_response_500" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  resource_id = aws_api_gateway_resource.api_gateway_orders_resource.id
+  http_method = aws_api_gateway_method.api_gateway_orders_method_post.http_method
+  status_code = aws_api_gateway_method_response.order_method_response_500.status_code
+  selection_pattern = "5\\d{2}"
 
   # Transforms the backend JSON response to XML
   response_templates = {
