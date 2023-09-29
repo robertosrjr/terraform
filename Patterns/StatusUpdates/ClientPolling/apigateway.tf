@@ -23,6 +23,7 @@ resource "aws_api_gateway_method" "api_gateway_orders_method_post" {
 
   request_parameters = {
     "method.request.header.x-api-key" = true
+    "method.request.header.Authorization" = true # Define api_key_required como verdadeira
   }
 }
 
@@ -73,10 +74,22 @@ resource "aws_api_gateway_deployment" "gateway_order_deployment_orders" {
   }
 }
 
-resource "aws_api_gateway_stage" "order_development" {
+resource "aws_api_gateway_stage" "order_stage_development" {
   deployment_id = aws_api_gateway_deployment.gateway_order_deployment_orders.id
   rest_api_id   = aws_api_gateway_rest_api.api_gateway_orders.id
   stage_name    = "dev"
+}
+
+## Alteração sem teste
+resource "aws_api_gateway_method_settings" "order_method_settings" {
+  rest_api_id = aws_api_gateway_rest_api.api_gateway_orders.id
+  stage_name  = aws_api_gateway_stage.order_stage_development.stage_name
+  method_path = "*/*"
+
+  settings {
+    metrics_enabled = true
+    logging_level   = "ERROR"
+  }
 }
 
 
@@ -93,7 +106,7 @@ resource "aws_api_gateway_usage_plan" "order_usage_plan" {
 
   api_stages {
     api_id = aws_api_gateway_rest_api.api_gateway_orders.id
-    stage  = aws_api_gateway_stage.order_development.stage_name
+    stage  = aws_api_gateway_stage.order_stage_development.stage_name
   }
 
   quota_settings {
