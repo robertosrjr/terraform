@@ -30,22 +30,35 @@ resource "aws_sqs_queue" "new_order_dlq" {
 
 #Configure a fila principal para enviar mensagens não processadas para a DLQ
 resource "aws_sqs_queue_policy" "new_order_queue_policy" {
+  
   queue_url = aws_sqs_queue.new_order_queue.id
-
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
-      Sid       = "Allow-Redrive-To-DLQ",
-      Effect    = "Allow",
-      Principal = "*",
-      Action    = "sqs:SendMessage",
-      Resource  = aws_sqs_queue.new_order_dlq.arn,
-      Condition = {
-        ArnEquals = {
-          "aws:SourceArn" = aws_sqs_queue.new_order_queue.arn
+    Statement = [
+      {
+        Sid       = "Allow-Redrive-To-DLQ",
+        Effect    = "Allow",
+        Principal = "*",
+        Action    = "sqs:SendMessage",
+        Resource  = aws_sqs_queue.new_order_dlq.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" = aws_sqs_queue.new_order_queue.arn
+          }
+        }
+      },
+      {
+        Action = "sqs:SendMessage",
+        Effect = "Allow",
+        Principal = "*",
+        Resource = aws_sqs_queue.new_order_queue.arn,
+        Condition = {
+          ArnEquals = {
+            "aws:SourceArn" = aws_lambda_function.new_order_command.arn
+          }
         }
       }
-    }]
+    ]
   })
 }
 
