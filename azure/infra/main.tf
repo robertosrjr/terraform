@@ -16,7 +16,7 @@ provider "azurerm" {
     features {}
     # A autenticação será buscada automaticamente do seu ambiente (Azure CLI, variáveis de ambiente, etc.)
     # Se você tiver múltiplas subscriptions, pode especificar aqui:
-    resource_provider_registrations = "none" # This is only required when the User, Service Principal, or Identity running Terraform lacks the permissions to register Azure Resource Providers.
+    resource_provider_registrations = "none"
   
 }
 

@@ -3,9 +3,9 @@ resource "azurerm_resource_group" "main" {
   location = var.location
 
   tags = {
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Owner       = "seu_email@exemplo.com"
+    environment = var.environment
+    project     = var.project_name
+    managedBy   = "Terraform"
+    owner       = "seu_email@exemplo.com"
   }
 }
